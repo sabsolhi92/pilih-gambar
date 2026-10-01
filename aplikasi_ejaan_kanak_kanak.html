@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mari Berisyarat!</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #fef08a; /* Latar belakang kuning ceria */
+            background-image: radial-gradient(#fde047 20%, transparent 20%),
+                              radial-gradient(#fde047 20%, transparent 20%);
+            background-color: #fef08a;
+            background-position: 0 0, 50px 50px;
+            background-size: 100px 100px;
+        }
+        h1, h2, h3, .btn-text {
+            font-family: 'Fredoka One', cursive;
+        }
+        .image-container {
+            width: 300px;
+            height: 300px;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 8px solid white;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            background-color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto;
+        }
+        .image-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .shake {
+            animation: shake 0.5s infinite;
+        }
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translate(3px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(3px, 1px) rotate(-1deg); }
+            80% { transform: translate(-1px, -1px) rotate(1deg); }
+            90% { transform: translate(1px, 2px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        }
+        
+        /* Gaya input ejaan */
+        .spelling-input {
+            letter-spacing: 10px;
+            text-transform: uppercase;
+        }
+
+        /* Modal gaya */
+        .modal-bg {
+            background-color: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center py-10 relative">
+
+    <header class="text-center mb-8">
+        <h1 class="text-5xl text-blue-600 drop-shadow-md mb-2">🎈 Mari Berisyarat! 🎈</h1>
+        <p class="text-xl text-gray-700 font-bold bg-white px-4 py-2 rounded-full inline-block shadow-sm">Isyaratkan gambar suku kata</p>
+    </header>
+
+    <main class="w-full max-w-xl bg-white/90 backdrop-blur-sm p-8 rounded-3xl shadow-xl flex flex-col items-center justify-center gap-6 border-4 border-blue-400 relative overflow-hidden">
+        
+        <!-- Bekas Imej -->
+        <div class="flex justify-center w-full">
+            <div id="image-display" class="image-container">
+                <img id="current-image" src="https://placehold.co/400x400/eeeeee/999999?text=Mula+Main!" alt="Gambar Rawak">
+            </div>
+        </div>
+
+        <!-- Bahagian Kawalan Di Bawah -->
+        <div id="control-panel" class="w-full flex flex-col items-center justify-center gap-4 mt-2">
+            
+            <button id="start-btn" class="bg-gradient-to-r from-green-400 to-green-600 hover:from-green-500 hover:to-green-700 text-white btn-text text-xl py-2 px-6 rounded-2xl shadow-md transform transition hover:scale-105 active:scale-95 w-auto inline-block">
+                Pilih Gambar 🎲
+            </button>
+            
+            <div id="action-panel" class="hidden flex-col items-center w-full">
+                <p id="word-display" class="text-4xl font-bold text-blue-600 mb-6 uppercase tracking-widest hidden"></p>
+                <button id="correct-btn" class="bg-blue-500 hover:bg-blue-600 text-white btn-text text-xl py-2 px-6 rounded-2xl shadow-md transform transition hover:scale-105 active:scale-95 w-auto inline-block">
+                    Selesai Isyarat ✅
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Modal Maklum Balas -->
+    <div id="feedback-modal" class="fixed inset-0 modal-bg hidden flex justify-center items-center z-50">
+        <div class="bg-white p-8 rounded-3xl text-center shadow-2xl transform transition-transform scale-95 border-8 border-yellow-400 max-w-md w-full mx-4">
+            <h2 id="modal-title" class="text-4xl mb-4">Tajuk</h2>
+            <p id="modal-message" class="text-xl mb-8 font-bold text-gray-700">Mesej</p>
+            <button id="modal-btn" class="bg-yellow-400 hover:bg-yellow-500 text-gray-800 btn-text text-xl py-3 px-8 rounded-full shadow-md transform transition hover:scale-105 active:scale-95">
+                Seterusnya ➡️
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal Tamat Permainan -->
+    <div id="end-modal" class="fixed inset-0 modal-bg hidden flex justify-center items-center z-50">
+        <div class="bg-white p-8 rounded-3xl text-center shadow-2xl transform transition-transform scale-95 border-8 border-green-400 max-w-md w-full mx-4">
+            <h2 class="text-5xl mb-4 text-green-500">Tahniah! 🎉</h2>
+            <p class="text-2xl mb-2 font-bold text-gray-700">Semua perkataan telah dipilih!</p>
+            <button id="restart-btn" class="bg-green-500 hover:bg-green-600 text-white btn-text text-xl mt-6 py-3 px-8 rounded-full shadow-md transform transition hover:scale-105 active:scale-95">
+                Main Semula 🔄
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Data Gambar dan Perkataan
+        const itemsData = [
+            { id: 1, word: 'baju', src: 'baju.png' },
+            { id: 2, word: 'gigi', src: 'gigi.png' },
+            { id: 3, word: 'kuku', src: 'kuku.png' },
+            { id: 4, word: 'mata', src: 'mata.png' },
+            { id: 5, word: 'tangan', src: 'tangan.png' }
+        ];
+
+        // Pembolehubah State Permainan
+        let availableItems = [...itemsData];
+        let currentSelectedItem = null;
+        let shuffleInterval = null;
+        // let score = 0; // Buang pembolehubah skor
+        const totalItems = itemsData.length;
+
+        // Elemen DOM
+        const startBtn = document.getElementById('start-btn');
+        const controlPanel = document.getElementById('control-panel');
+        const actionPanel = document.getElementById('action-panel');
+        const correctBtn = document.getElementById('correct-btn');
+        const wordDisplay = document.getElementById('word-display');
+        const imgDisplay = document.getElementById('current-image');
+        const imgContainer = document.querySelector('.image-container');
+        
+        // Modal Elemen
+        const feedbackModal = document.getElementById('feedback-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalMessage = document.getElementById('modal-message');
+        const modalBtn = document.getElementById('modal-btn');
+        const endModal = document.getElementById('end-modal');
+        const restartBtn = document.getElementById('restart-btn');
+
+        // Fungsi Bunyi (Tone.js)
+        let isToneStarted = false;
+        
+        async function initAudio() {
+            if (!isToneStarted) {
+                await Tone.start();
+                isToneStarted = true;
+            }
+        }
+
+        // Sintesis Bunyi
+        const synth = new Tone.Synth().toDestination();
+        const metalSynth = new Tone.MetalSynth({
+            frequency: 200,
+            envelope: {
+                attack: 0.001,
+                decay: 0.1,
+                release: 0.01
+            },
+            harmonicity: 5.1,
+            modulationIndex: 32,
+            resonance: 4000,
+            octaves: 1.5
+        }).toDestination();
+
+        // Bunyi 'Tick' semasa gambar berputar
+        function playTickSound() {
+            if(!isToneStarted) return;
+            metalSynth.triggerAttackRelease("32n");
+        }
+
+        // Bunyi 'Tada' apabila gambar dipilih
+        function playSelectSound() {
+            if(!isToneStarted) return;
+            const now = Tone.now();
+            synth.triggerAttackRelease("C4", "8n", now);
+            synth.triggerAttackRelease("E4", "8n", now + 0.15);
+            synth.triggerAttackRelease("G4", "4n", now + 0.3);
+            synth.triggerAttackRelease("C5", "2n", now + 0.45);
+        }
+
+        // Bunyi Betul
+        function playCorrectSound() {
+            if(!isToneStarted) return;
+            const now = Tone.now();
+            synth.triggerAttackRelease("C5", "8n", now);
+            synth.triggerAttackRelease("E5", "8n", now + 0.1);
+            synth.triggerAttackRelease("G5", "4n", now + 0.2);
+        }
+
+        // Bunyi Salah
+        function playWrongSound() {
+            if(!isToneStarted) return;
+            synth.triggerAttackRelease("C3", "4n");
+        }
+
+
+        function startShuffle() {
+            initAudio(); // Pastikan audio dimulakan
+            
+            if (availableItems.length === 0) return;
+
+            // Sembunyikan panel tindakan semasa memutar
+            actionPanel.classList.add('hidden');
+            actionPanel.classList.remove('flex');
+            wordDisplay.classList.add('hidden');
+            
+            startBtn.disabled = true;
+            startBtn.innerHTML = "Memilih... ⏳";
+            startBtn.classList.add('opacity-75', 'cursor-not-allowed');
+            
+            imgContainer.classList.add('shake');
+
+            let tickCount = 0;
+            const duration = 5000; // Tukar kepada 5 saat
+            const intervalTime = 150; // tukar gambar setiap 150ms
+
+            shuffleInterval = setInterval(() => {
+                // Pilih indeks rawak dari semua item untuk efek animasi
+                const randomIndex = Math.floor(Math.random() * itemsData.length);
+                imgDisplay.src = itemsData[randomIndex].src;
+                
+                // Mainkan bunyi tick selang seli untuk elak terlalu bising
+                if(tickCount % 2 === 0) playTickSound();
+                tickCount++;
+
+            }, intervalTime);
+
+            // Berhenti selepas 10 saat
+            setTimeout(() => {
+                stopShuffle();
+            }, duration);
+        }
+
+        function stopShuffle() {
+            clearInterval(shuffleInterval);
+            imgContainer.classList.remove('shake');
+            playSelectSound();
+
+            // Pilih satu item secara rawak dari array *availableItems* (yang belum dijawab)
+            const randomIndex = Math.floor(Math.random() * availableItems.length);
+            currentSelectedItem = availableItems[randomIndex];
+            
+            // Paparkan gambar terpilih
+            imgDisplay.src = currentSelectedItem.src;
+            
+            // Tunjukkan butang "Selesai", sembunyikan butang "Mula"
+            startBtn.classList.add('hidden');
+            
+            actionPanel.classList.remove('hidden');
+            actionPanel.classList.add('flex');
+            
+            // Paparkan teks perkataan yang perlu dieja (pilihan, boleh dibuang jika mahu murid teka sendiri)
+            // wordDisplay.textContent = currentSelectedItem.word;
+            // wordDisplay.classList.remove('hidden'); 
+        }
+
+        function markAsDone() {
+            initAudio();
+            playCorrectSound();
+            
+            // Keluarkan item dari senarai yang belum dijawab
+            availableItems = availableItems.filter(item => item.id !== currentSelectedItem.id);
+            
+            if (availableItems.length === 0) {
+                showGameEnd();
+            } else {
+                resetForNextTurn();
+            }
+        }
+
+        // Buang fungsi checkSpelling dan showFeedback
+
+        function closeFeedback() {
+            const modalBox = feedbackModal.querySelector('div');
+            modalBox.classList.remove('scale-100');
+            modalBox.classList.add('scale-95');
+            setTimeout(() => {
+                feedbackModal.classList.add('hidden');
+                modalTitle.className = "text-4xl mb-4"; // reset classes
+            }, 200);
+        }
+
+        function resetForNextTurn() {
+            actionPanel.classList.add('hidden');
+            actionPanel.classList.remove('flex');
+            wordDisplay.classList.add('hidden');
+            
+            startBtn.classList.remove('hidden');
+            startBtn.disabled = false;
+            startBtn.innerHTML = "Pilih Gambar 🎲";
+            startBtn.classList.remove('opacity-75', 'cursor-not-allowed');
+            
+            imgDisplay.src = "https://placehold.co/400x400/eeeeee/999999?text=Sedia...";
+        }
+
+        function showGameEnd() {
+            playSelectSound(); // Guna bunyi gembira untuk tamat
+            actionPanel.classList.add('hidden'); // Sembunyikan panel tindakan
+            endModal.classList.remove('hidden');
+            const modalBox = endModal.querySelector('div');
+            setTimeout(() => {
+                modalBox.classList.remove('scale-95');
+                modalBox.classList.add('scale-100');
+            }, 10);
+        }
+
+        // Event Listeners
+        startBtn.addEventListener('click', startShuffle);
+        
+        correctBtn.addEventListener('click', markAsDone);
+
+        restartBtn.addEventListener('click', () => {
+            // Reset state
+            availableItems = [...itemsData];
+            
+            // Tutup modal
+            const modalBox = endModal.querySelector('div');
+            modalBox.classList.remove('scale-100');
+            modalBox.classList.add('scale-95');
+            setTimeout(() => {
+                endModal.classList.add('hidden');
+            }, 200);
+
+            // Kembali ke panel mula
+            startBtn.classList.remove('hidden');
+            resetForNextTurn();
+            imgDisplay.src = "https://placehold.co/400x400/eeeeee/999999?text=Mula+Main!";
+            startBtn.innerHTML = "Pilih Gambar 🎲";
+        });
+
+        // Initialize audio context on first interaction with the document (browser requirement)
+        document.body.addEventListener('click', initAudio, { once: true });
+
+    </script>
+</body>
+</html>
